@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>試算表轉 JSON 轉換器</title>
+    <title>試算表與 JSON 雙向轉換器</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -74,7 +74,7 @@
             box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
         }
         
-        .json-output {
+        .json-output, .spreadsheet-output {
             background-color: #f8f9fa;
             border-radius: 8px;
             padding: 1rem;
@@ -131,6 +131,25 @@
             color: var(--dark-color);
         }
         
+        .conversion-mode {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            min-width: 200px;
+        }
+        
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.8rem;
@@ -144,6 +163,14 @@
                 width: 100%;
                 margin-bottom: 0.5rem;
             }
+            
+            .mode-buttons {
+                flex-direction: column;
+            }
+            
+            .mode-btn {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
@@ -151,8 +178,8 @@
     <!-- 頁首 -->
     <header class="header text-center">
         <div class="container">
-            <h1 class="display-4 fw-bold"><i class="fas fa-table me-2"></i>試算表轉 JSON 轉換器</h1>
-            <p class="lead">輕鬆將試算表數據轉換為 JSON 格式</p>
+            <h1 class="display-4 fw-bold"><i class="fas fa-exchange-alt me-2"></i>試算表與 JSON 雙向轉換器</h1>
+            <p class="lead">輕鬆實現試算表數據與 JSON 格式之間的相互轉換</p>
         </div>
     </header>
 
@@ -161,20 +188,33 @@
         <!-- 使用說明 -->
         <div class="instructions">
             <h5><i class="fas fa-info-circle me-2"></i>使用說明</h5>
-            <p class="mb-0">從 Excel、Google Sheets 或其他試算表軟體中複製數據（包含標題行），然後貼到下方輸入框中。系統會自動將數據轉換為 JSON 格式。</p>
+            <p class="mb-0">選擇轉換方向，然後輸入相應格式的數據。系統會自動將數據轉換為您需要的格式。</p>
+        </div>
+
+        <!-- 轉換模式選擇 -->
+        <div class="conversion-mode">
+            <h5 class="mb-3"><i class="fas fa-random me-2"></i>選擇轉換模式</h5>
+            <div class="mode-buttons">
+                <button class="btn btn-primary mode-btn active" id="toJsonMode">
+                    <i class="fas fa-table me-1"></i>試算表轉 JSON
+                </button>
+                <button class="btn btn-outline-primary mode-btn" id="toSpreadsheetMode">
+                    <i class="fas fa-code me-1"></i>JSON 轉試算表
+                </button>
+            </div>
         </div>
 
         <!-- 輸入區域 -->
-        <div class="card">
+        <div class="card" id="inputCard">
             <div class="card-header">
                 <i class="fas fa-paste"></i>
-                <span>貼上試算表數據</span>
+                <span id="inputTitle">貼上試算表數據</span>
             </div>
             <div class="card-body">
-                <textarea class="form-control input-area" id="spreadsheetInput" placeholder="請從試算表複製數據並貼上到此處..."></textarea>
+                <textarea class="form-control input-area" id="dataInput" placeholder="請從試算表複製數據並貼上到此處..."></textarea>
                 <div class="mt-3 d-flex flex-wrap gap-2">
                     <button class="btn btn-primary" id="convertBtn">
-                        <i class="fas fa-sync-alt me-1"></i>轉換為 JSON
+                        <i class="fas fa-sync-alt me-1"></i>轉換
                     </button>
                     <button class="btn btn-outline-secondary" id="clearBtn">
                         <i class="fas fa-eraser me-1"></i>清除內容
@@ -187,10 +227,10 @@
         </div>
 
         <!-- 輸出區域 -->
-        <div class="card">
+        <div class="card" id="outputCard">
             <div class="card-header">
-                <i class="fas fa-code"></i>
-                <span>JSON 輸出</span>
+                <i class="fas fa-code" id="outputIcon"></i>
+                <span id="outputTitle">JSON 輸出</span>
                 <span class="badge rounded-pill ms-2" id="itemCount">0 個項目</span>
             </div>
             <div class="card-body">
@@ -200,9 +240,15 @@
                         <p>JSON 輸出將顯示在這裡</p>
                     </div>
                 </div>
+                <div class="spreadsheet-output" id="spreadsheetOutput" style="display: none;">
+                    <div class="text-muted text-center py-5">
+                        <i class="fas fa-table fa-3x mb-3"></i>
+                        <p>試算表輸出將顯示在這裡</p>
+                    </div>
+                </div>
                 <div class="mt-3 d-flex flex-wrap gap-2">
                     <button class="btn btn-outline-secondary" id="copyBtn" disabled>
-                        <i class="fas fa-copy me-1"></i>複製 JSON
+                        <i class="fas fa-copy me-1"></i>複製結果
                     </button>
                 </div>
             </div>
@@ -212,7 +258,7 @@
     <!-- 頁尾 -->
     <footer class="footer text-center">
         <div class="container">
-            <p>&copy; 2023 試算表轉 JSON 轉換器 | 設計用於各種裝置</p>
+            <p>&copy; 2023 試算表與 JSON 雙向轉換器 | 設計用於各種裝置</p>
         </div>
     </footer>
 
@@ -221,41 +267,141 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const spreadsheetInput = document.getElementById('spreadsheetInput');
+            const dataInput = document.getElementById('dataInput');
             const convertBtn = document.getElementById('convertBtn');
             const clearBtn = document.getElementById('clearBtn');
             const exampleBtn = document.getElementById('exampleBtn');
             const copyBtn = document.getElementById('copyBtn');
             const jsonOutput = document.getElementById('jsonOutput');
+            const spreadsheetOutput = document.getElementById('spreadsheetOutput');
             const itemCount = document.getElementById('itemCount');
             
+            // 模式切換元素
+            const toJsonMode = document.getElementById('toJsonMode');
+            const toSpreadsheetMode = document.getElementById('toSpreadsheetMode');
+            const inputTitle = document.getElementById('inputTitle');
+            const outputTitle = document.getElementById('outputTitle');
+            const outputIcon = document.getElementById('outputIcon');
+            
+            let currentMode = 'toJson'; // 預設模式為試算表轉 JSON
+            
+            // 模式切換事件
+            toJsonMode.addEventListener('click', function() {
+                setMode('toJson');
+            });
+            
+            toSpreadsheetMode.addEventListener('click', function() {
+                setMode('toSpreadsheet');
+            });
+            
+            // 設定模式
+            function setMode(mode) {
+                currentMode = mode;
+                
+                if (mode === 'toJson') {
+                    toJsonMode.classList.remove('btn-outline-primary');
+                    toJsonMode.classList.add('btn-primary');
+                    toSpreadsheetMode.classList.remove('btn-primary');
+                    toSpreadsheetMode.classList.add('btn-outline-primary');
+                    
+                    inputTitle.textContent = '貼上試算表數據';
+                    outputTitle.textContent = 'JSON 輸出';
+                    outputIcon.className = 'fas fa-code';
+                    dataInput.placeholder = '請從試算表複製數據並貼上到此處...';
+                    
+                    jsonOutput.style.display = 'block';
+                    spreadsheetOutput.style.display = 'none';
+                    
+                    // 清除輸出區域
+                    clearOutput();
+                } else {
+                    toSpreadsheetMode.classList.remove('btn-outline-primary');
+                    toSpreadsheetMode.classList.add('btn-primary');
+                    toJsonMode.classList.remove('btn-primary');
+                    toJsonMode.classList.add('btn-outline-primary');
+                    
+                    inputTitle.textContent = '貼上 JSON 數據';
+                    outputTitle.textContent = '試算表輸出';
+                    outputIcon.className = 'fas fa-table';
+                    dataInput.placeholder = '請貼上 JSON 數據到此處...';
+                    
+                    jsonOutput.style.display = 'none';
+                    spreadsheetOutput.style.display = 'block';
+                    
+                    // 清除輸出區域
+                    clearOutput();
+                }
+            }
+            
             // 轉換按鈕點擊事件
-            convertBtn.addEventListener('click', convertToJson);
+            convertBtn.addEventListener('click', function() {
+                if (currentMode === 'toJson') {
+                    convertToJson();
+                } else {
+                    convertToSpreadsheet();
+                }
+            });
             
             // 清除按鈕點擊事件
             clearBtn.addEventListener('click', function() {
-                spreadsheetInput.value = '';
-                jsonOutput.innerHTML = '<div class="text-muted text-center py-5"><i class="fas fa-code fa-3x mb-3"></i><p>JSON 輸出將顯示在這裡</p></div>';
-                itemCount.textContent = '0 個項目';
-                copyBtn.disabled = true;
+                dataInput.value = '';
+                clearOutput();
             });
             
             // 範例按鈕點擊事件
             exampleBtn.addEventListener('click', function() {
-                const exampleData = `姓名	年齡	城市	職業
+                if (currentMode === 'toJson') {
+                    const exampleData = `姓名	年齡	城市	職業
 張三	28	台北	工程師
 李四	32	台中	設計師
 王五	25	高雄	教師
 趙六	30	台南	醫生`;
-                
-                spreadsheetInput.value = exampleData;
-                convertToJson();
+                    
+                    dataInput.value = exampleData;
+                    convertToJson();
+                } else {
+                    const exampleData = `[
+  {
+    "姓名": "張三",
+    "年齡": 28,
+    "城市": "台北",
+    "職業": "工程師"
+  },
+  {
+    "姓名": "李四",
+    "年齡": 32,
+    "城市": "台中",
+    "職業": "設計師"
+  },
+  {
+    "姓名": "王五",
+    "年齡": 25,
+    "城市": "高雄",
+    "職業": "教師"
+  },
+  {
+    "姓名": "趙六",
+    "年齡": 30,
+    "城市": "台南",
+    "職業": "醫生"
+  }
+]`;
+                    
+                    dataInput.value = exampleData;
+                    convertToSpreadsheet();
+                }
             });
             
             // 複製按鈕點擊事件
             copyBtn.addEventListener('click', function() {
-                const jsonText = jsonOutput.textContent;
-                navigator.clipboard.writeText(jsonText).then(function() {
+                let textToCopy;
+                if (currentMode === 'toJson') {
+                    textToCopy = jsonOutput.textContent;
+                } else {
+                    textToCopy = spreadsheetOutput.textContent;
+                }
+                
+                navigator.clipboard.writeText(textToCopy).then(function() {
                     // 顯示成功訊息
                     const originalText = copyBtn.innerHTML;
                     copyBtn.innerHTML = '<i class="fas fa-check me-1"></i>已複製!';
@@ -270,9 +416,20 @@
                 });
             });
             
-            // 轉換函數
+            // 清除輸出區域
+            function clearOutput() {
+                if (currentMode === 'toJson') {
+                    jsonOutput.innerHTML = '<div class="text-muted text-center py-5"><i class="fas fa-code fa-3x mb-3"></i><p>JSON 輸出將顯示在這裡</p></div>';
+                } else {
+                    spreadsheetOutput.innerHTML = '<div class="text-muted text-center py-5"><i class="fas fa-table fa-3x mb-3"></i><p>試算表輸出將顯示在這裡</p></div>';
+                }
+                itemCount.textContent = '0 個項目';
+                copyBtn.disabled = true;
+            }
+            
+            // 試算表轉 JSON 函數
             function convertToJson() {
-                const inputText = spreadsheetInput.value.trim();
+                const inputText = dataInput.value.trim();
                 
                 if (!inputText) {
                     jsonOutput.innerHTML = '<div class="text-danger text-center py-3"><i class="fas fa-exclamation-triangle me-2"></i>請輸入試算表數據</div>';
@@ -316,6 +473,53 @@
                     
                 } catch (error) {
                     jsonOutput.innerHTML = `<div class="text-danger py-3"><i class="fas fa-exclamation-triangle me-2"></i>轉換錯誤: ${error.message}</div>`;
+                    itemCount.textContent = '0 個項目';
+                    copyBtn.disabled = true;
+                }
+            }
+            
+            // JSON 轉試算表函數
+            function convertToSpreadsheet() {
+                const inputText = dataInput.value.trim();
+                
+                if (!inputText) {
+                    spreadsheetOutput.innerHTML = '<div class="text-danger text-center py-3"><i class="fas fa-exclamation-triangle me-2"></i>請輸入 JSON 數據</div>';
+                    itemCount.textContent = '0 個項目';
+                    copyBtn.disabled = true;
+                    return;
+                }
+                
+                try {
+                    // 解析 JSON
+                    const data = JSON.parse(inputText);
+                    
+                    if (!Array.isArray(data) || data.length === 0) {
+                        throw new Error('JSON 必須是一個非空陣列');
+                    }
+                    
+                    // 獲取所有標題（鍵名）
+                    const headers = Object.keys(data[0]);
+                    
+                    // 建立標題行
+                    let outputText = headers.join('\t') + '\n';
+                    
+                    // 建立數據行
+                    data.forEach(item => {
+                        const row = headers.map(header => {
+                            // 處理 undefined 或 null 值
+                            return item[header] !== undefined && item[header] !== null ? 
+                                String(item[header]) : '';
+                        });
+                        outputText += row.join('\t') + '\n';
+                    });
+                    
+                    // 顯示試算表輸出
+                    spreadsheetOutput.textContent = outputText;
+                    itemCount.textContent = `${data.length} 個項目`;
+                    copyBtn.disabled = false;
+                    
+                } catch (error) {
+                    spreadsheetOutput.innerHTML = `<div class="text-danger py-3"><i class="fas fa-exclamation-triangle me-2"></i>轉換錯誤: ${error.message}</div>`;
                     itemCount.textContent = '0 個項目';
                     copyBtn.disabled = true;
                 }
