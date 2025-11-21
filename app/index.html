@@ -250,6 +250,9 @@
                     <button class="btn btn-outline-secondary" id="copyBtn" disabled>
                         <i class="fas fa-copy me-1"></i>複製結果
                     </button>
+                    <button class="btn btn-outline-secondary" id="downloadBtn" disabled>
+                        <i class="fas fa-download me-1"></i>下載結果
+                    </button>
                 </div>
             </div>
         </div>
@@ -272,6 +275,7 @@
             const clearBtn = document.getElementById('clearBtn');
             const exampleBtn = document.getElementById('exampleBtn');
             const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
             const jsonOutput = document.getElementById('jsonOutput');
             const spreadsheetOutput = document.getElementById('spreadsheetOutput');
             const itemCount = document.getElementById('itemCount');
@@ -416,6 +420,47 @@
                 });
             });
             
+            // 下載按鈕點擊事件
+            downloadBtn.addEventListener('click', function() {
+                let content, fileName, mimeType;
+                
+                if (currentMode === 'toJson') {
+                    content = jsonOutput.textContent;
+                    fileName = 'converted_data.json';
+                    mimeType = 'application/json';
+                } else {
+                    // 將試算表數據轉換為 CSV 格式
+                    content = convertToCSV(spreadsheetOutput.textContent);
+                    fileName = 'converted_data.csv';
+                    mimeType = 'text/csv';
+                }
+                
+                // 創建 Blob 對象
+                const blob = new Blob([content], { type: mimeType });
+                
+                // 創建下載連結
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                
+                // 模擬點擊下載連結
+                document.body.appendChild(a);
+                a.click();
+                
+                // 清理資源
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
+            
+            // 將試算表數據轉換為 CSV 格式
+            function convertToCSV(spreadsheetData) {
+                // 將製表符分隔的數據轉換為逗號分隔
+                return spreadsheetData.replace(/\t/g, ',');
+            }
+            
             // 清除輸出區域
             function clearOutput() {
                 if (currentMode === 'toJson') {
@@ -425,6 +470,7 @@
                 }
                 itemCount.textContent = '0 個項目';
                 copyBtn.disabled = true;
+                downloadBtn.disabled = true;
             }
             
             // 試算表轉 JSON 函數
@@ -435,6 +481,7 @@
                     jsonOutput.innerHTML = '<div class="text-danger text-center py-3"><i class="fas fa-exclamation-triangle me-2"></i>請輸入試算表數據</div>';
                     itemCount.textContent = '0 個項目';
                     copyBtn.disabled = true;
+                    downloadBtn.disabled = true;
                     return;
                 }
                 
@@ -470,11 +517,13 @@
                     jsonOutput.textContent = jsonString;
                     itemCount.textContent = `${data.length} 個項目`;
                     copyBtn.disabled = false;
+                    downloadBtn.disabled = false;
                     
                 } catch (error) {
                     jsonOutput.innerHTML = `<div class="text-danger py-3"><i class="fas fa-exclamation-triangle me-2"></i>轉換錯誤: ${error.message}</div>`;
                     itemCount.textContent = '0 個項目';
                     copyBtn.disabled = true;
+                    downloadBtn.disabled = true;
                 }
             }
             
@@ -486,6 +535,7 @@
                     spreadsheetOutput.innerHTML = '<div class="text-danger text-center py-3"><i class="fas fa-exclamation-triangle me-2"></i>請輸入 JSON 數據</div>';
                     itemCount.textContent = '0 個項目';
                     copyBtn.disabled = true;
+                    downloadBtn.disabled = true;
                     return;
                 }
                 
@@ -517,11 +567,13 @@
                     spreadsheetOutput.textContent = outputText;
                     itemCount.textContent = `${data.length} 個項目`;
                     copyBtn.disabled = false;
+                    downloadBtn.disabled = false;
                     
                 } catch (error) {
                     spreadsheetOutput.innerHTML = `<div class="text-danger py-3"><i class="fas fa-exclamation-triangle me-2"></i>轉換錯誤: ${error.message}</div>`;
                     itemCount.textContent = '0 個項目';
                     copyBtn.disabled = true;
+                    downloadBtn.disabled = true;
                 }
             }
         });
